@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Budget = require('../models/Budget');
 const Transaction = require('../models/Transaction');
 const { protect } = require('../middleware/auth');
@@ -63,7 +64,7 @@ router.get('/summary', async (req, res) => {
     const spending = await Transaction.aggregate([
       {
         $match: {
-          user: req.user.id,
+          user: new mongoose.Types.ObjectId(req.user.id),
           type: 'expense',
           date: { $gte: startDate, $lt: endDate },
         },
