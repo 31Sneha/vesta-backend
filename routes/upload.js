@@ -54,7 +54,7 @@ router.post('/statement', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
@@ -93,6 +93,7 @@ router.post('/statement', upload.single('file'), async (req, res) => {
 
     res.json({ success: true, count: preview.length, data: preview });
   } catch (err) {
+    console.error('Upload/statement error:', err);
     res.status(500).json({ success: false, message: 'Failed to parse file: ' + err.message });
   }
 });
@@ -114,9 +115,15 @@ router.post('/confirm', async (req, res) => {
       date: tx.date ? new Date(tx.date) : new Date(),
     }));
 
-    const inserted = await Transaction.insertMany(docs);
+    const inserted = [];
+    for (const doc of docs) {
+      const created = await Transaction.create(doc);
+      inserted.push(created);
+    }
+
     res.status(201).json({ success: true, count: inserted.length });
   } catch (err) {
+    console.error('Upload/confirm error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
