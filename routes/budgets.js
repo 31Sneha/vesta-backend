@@ -8,6 +8,22 @@ const { protect } = require('../middleware/auth');
 // All budget routes require login
 router.use(protect);
 
+// Maps a transaction's category to the budget category it should count toward.
+// Add new entries here any time you introduce a new transaction category.
+const CATEGORY_TO_BUDGET = {
+  Food: 'Food',
+  Groceries: 'Food',
+  Utilities: 'Utilities',
+  Rent: 'Housing',
+  Transport: 'Other',
+  Entertainment: 'Entertainment',
+  Education: 'Education',
+};
+
+function mapToBudgetCategory(transactionCategory) {
+  return CATEGORY_TO_BUDGET[transactionCategory] || 'Other';
+}
+
 // POST /api/budgets — Create a new budget
 router.post('/', async (req, res) => {
   try {
@@ -77,8 +93,12 @@ router.get('/summary', async (req, res) => {
       },
     ]);
 
+    // Roll raw transaction categories up into budget categories
     const spendingMap = {};
-    spending.forEach((s) => (spendingMap[s._id] = s.total));
+    spending.forEach((s) => {
+      const budgetCategory = mapToBudgetCategory(s._id);
+      spendingMap[budgetCategory] = (spendingMap[budgetCategory] || 0) + s.total;
+    });
 
     const summary = budgets.map((b) => {
       const spent = spendingMap[b.category] || 0;
