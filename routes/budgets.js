@@ -64,7 +64,7 @@ router.get('/summary', async (req, res) => {
     const spending = await Transaction.aggregate([
       {
         $match: {
-          user: new mongoose.Types.ObjectId(req.user.id),
+          userId: new mongoose.Types.ObjectId(req.user.id),
           type: 'expense',
           date: { $gte: startDate, $lt: endDate },
         },
